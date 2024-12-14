@@ -106,7 +106,7 @@ const EditProduct: React.FC = () => {
         });
 
         toast.success('Product updated successfully!');
-        navigate('/tables');
+        navigate('/products');
       } catch (error) {
         toast.error('Error updating product.');
         console.error(error);
