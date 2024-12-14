@@ -133,7 +133,7 @@ const AddProduct: React.FC = () => {
         imageURL: '',  // Clear imageURL after successful form submission
       });
 
-      navigate('/tables'); // Redirect to table page
+      navigate('/products'); // Redirect to table page
     } catch (error) {
       console.error('Error adding product:', error);
       alert('Failed to add product. Please try again.');

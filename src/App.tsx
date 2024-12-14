@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 
 import Loader from './common/Loader';
 import PageTitle from './components/PageTitle';
@@ -17,27 +17,12 @@ import Tables from './pages/Tables';
 import Alerts from './pages/UiElements/Alerts';
 import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
+import CashierLayout from './layout/CashierLayout';
 import AddProducts from './pages/Products/addProduct';
+import Cashier from './pages/Cashier/Cashier';
 import EditProduct from './pages/Products/editProduct';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './context/ProtectedRoute';
-
-// Mock functions for fetching and updating product data
-// const fetchProduct = async (id: string) => {
-// Return some mock data for the product with the given ID
-//   return {
-//     name: 'Product A',
-//     category: 'Category A',
-//     price: 100,
-//     quantity: 10,
-//     image: null,
-//     existingImage: 'path/to/existing/image.jpg',
-//   };
-// };
-
-// const updateProduct = async (id: string, data: any) => {
-//   console.log('Product updated:', id, data);
-// };
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,8 +43,9 @@ function App() {
     <AuthProvider>
       <Routes>
 
+        <Route path="/" element={<Navigate to="/ECommerce" replace />} />
 
-        _________________________________________
+        {/* _________________________________________ */}
         <Route
           path="/signin"
           element={
@@ -70,7 +56,6 @@ function App() {
           }
         />
 
-
         <Route
           path="/signup"
           element={
@@ -80,12 +65,9 @@ function App() {
             </>
           }
         />
-        _________________________________________
+        {/* _________________________________________ */}
 
-
-
-
-        {/* Parent route for DefaultLayout */}
+        {/* Parent route for admin */}
         <Route path="/" element={
           <ProtectedRoute>
             <DefaultLayout />
@@ -105,18 +87,8 @@ function App() {
           />
 
 
-
           {/* Update the EditProduct route to handle productId dynamically */}
 
-          <Route
-            path="calendar"
-            element={
-              <>
-                <PageTitle title="Calendar" />
-                <Calendar />
-              </>
-            }
-          />
           <Route
             path="profile"
             element={
@@ -126,29 +98,12 @@ function App() {
               </>
             }
           />
+
           <Route
-            path="forms/form-elements"
+            path="products"
             element={
               <>
-                <PageTitle title="Form Elements" />
-                <FormElements />
-              </>
-            }
-          />
-          <Route
-            path="forms/form-layout"
-            element={
-              <>
-                <PageTitle title="Form Layout" />
-                <FormLayout />
-              </>
-            }
-          />
-          <Route
-            path="tables"
-            element={
-              <>
-                <PageTitle title="Tables" />
+                <PageTitle title="Products" />
                 <Tables />
               </>
             }
@@ -180,34 +135,50 @@ function App() {
               </>
             }
           />
-          <Route
-            path="chart"
-            element={
-              <>
-                <PageTitle title="Basic Chart" />
-                <Chart />
-              </>
-            }
-          />
-          <Route
-            path="ui/alerts"
-            element={
-              <>
-                <PageTitle title="Alerts" />
-                <Alerts />
-              </>
-            }
-          />
-          <Route
-            path="ui/buttons"
-            element={
-              <>
-                <PageTitle title="Buttons" />
-                <Buttons />
-              </>
-            }
-          />
         </Route>
+
+        {/* Parent route for user Cashier */}
+        <Route path="/user" element={
+          <ProtectedRoute>
+            <CashierLayout />
+          </ProtectedRoute>
+        }>
+          <Route
+            path="Cashier"
+            element={
+              <>
+                <PageTitle title="Cashier" />
+                <Cashier />
+              </>
+            }
+          />
+
+          <Route
+            path="settings"
+            element={
+              <>
+                <PageTitle title="Settings" />
+                <Settings />
+              </>
+            }
+          />
+
+          <Route
+            path="profile"
+            element={
+              <>
+                <PageTitle title="Profile" />
+                <Profile />
+              </>
+            }
+          />
+
+
+        </Route>
+
+
+
+
       </Routes>
     </AuthProvider>
 
