@@ -38,6 +38,14 @@ const SignUp: React.FC = () => {
       return;
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Invalid email format');
+      setLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -49,8 +57,14 @@ const SignUp: React.FC = () => {
       });
 
       navigate('/signin');
-    } catch (error) {
-      setError('Error creating account');
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Email is already in use');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email format');
+      } else {
+        setError('Error creating account');
+      }
     } finally {
       setLoading(false);
     }
