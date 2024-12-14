@@ -1,9 +1,10 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../../firebaseConfig'; // Adjust paths based on your setup
+import QRCode from 'qrcode'; // Import QRCode
 
 // Define a type for the product form data
 interface ProductFormData {
@@ -103,10 +104,24 @@ const AddProduct: React.FC = () => {
         category: formData.category,
         price: formData.price,
         qty: formData.qty,
-        imageURL: formData.imageURL, // Ensure imageURL is included
+        imageURL: formData.imageURL,
       };
 
-      await addDoc(collection(db, 'products'), productData);
+      // First, get the document reference after adding
+      const docRef = await addDoc(collection(db, 'products'), productData);
+      const productId = docRef.id;
+
+      // Create JSON format for QR code
+      const qrData = JSON.stringify({ id: productId });
+
+      // Generate QR code using qrcode library with JSON data
+      const qrCodeUrl = await QRCode.toDataURL(qrData);
+
+      // Update the same document with QR code URL
+      await updateDoc(docRef, {
+        qrCodeUrl: qrCodeUrl
+      });
+
       alert('Product added successfully!');
 
       // Reset form after successful submission
