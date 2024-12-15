@@ -1,12 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 const Cashier = () => {
+    // Add audio state
+    const [audio] = useState(new Audio('/beep.mp3'));
+
+    const playBeep = async () => {
+        try {
+            audio.currentTime = 0; // Reset audio to start
+            await audio.play();
+        } catch (error) {
+            console.error("Error playing beep:", error);
+        }
+    };
+
     const [cartId, setCartId] = useState('');
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+
+    useEffect(() => {
+        if (cartId) {
+            playBeep(); // Play beep sound
+            handleSearch();
+        }
+    }, [cartId]);
+
+    useEffect(() => {
+        if (showScanner) {
+            const scanner = new Html5QrcodeScanner("reader", {
+                qrbox: {
+                    width: 250,
+                    height: 250,
+                },
+                fps: 5,
+                rememberLastUsedCamera: true,
+                aspectRatio: 1,
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+            });
+
+            const onScanSuccess = (decodedText) => {
+                try {
+                    const scannedData = JSON.parse(decodedText);
+                    if (scannedData && scannedData.id) {
+                        setCartId(scannedData.id);
+                        scanner.clear();
+                        setShowScanner(false);
+                    }
+                } catch (error) {
+                    console.error("QR code parsing error:", error);
+                }
+            };
+
+            const onScanError = (error) => {
+                // Ignore scan errors as they occur frequently during scanning
+                console.debug("QR scan error:", error);
+            };
+
+            scanner.render(onScanSuccess, onScanError);
+
+            return () => {
+                scanner.clear().catch(console.error);
+            };
+        }
+    }, [showScanner]);
 
     const handleSearch = async () => {
         try {
@@ -116,6 +176,12 @@ const Cashier = () => {
                     placeholder="Enter Cart ID"
                     className="border p-2 rounded"
                 />
+                <button 
+                    onClick={() => setShowScanner(!showScanner)}
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                >
+                    {showScanner ? 'Close Scanner' : 'Scan QR'}
+                </button>
                 <button
                     onClick={handleSearch}
                     disabled={loading}
@@ -130,6 +196,10 @@ const Cashier = () => {
                     Reset
                 </button>
             </div>
+
+            {showScanner && (
+                <div id="reader" className="w-96 mx-auto mb-6"></div>
+            )}
 
             {cartItems.length > 0 && (
                 <>
