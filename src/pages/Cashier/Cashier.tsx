@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, doc, getDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
@@ -112,34 +112,35 @@ const Cashier = () => {
         }
     };
 
+    const handleRemoveItem = (itemId) => {
+        setCartItems(prev => prev.filter(item => item.id !== itemId));
+    };
+
+    const handleQuantityChange = (itemId, newQuantity) => {
+        setCartItems(prev => prev.map(item => 
+            item.id === itemId 
+                ? { ...item, quantity: parseInt(newQuantity), totalPrice: item.price * parseInt(newQuantity) }
+                : item
+        ));
+    };
+
     const handleSubmitOrder = async () => {
         try {
             setSubmitLoading(true);
-
-            // Get cart document to access userId
+            
+            // Update cart in Firestore
             const cartRef = doc(db, 'carts', cartId);
-            const cartSnap = await getDoc(cartRef);
-            const cartData = cartSnap.data();
-
-            // Check for existing order
-            const orderQuery = query(
-                collection(db, 'customer_orders'),
-                where('cartId', '==', cartId),
-                where('userId', '==', cartData.userId)
-            );
-            const orderSnap = await getDocs(orderQuery);
-
-            if (!orderSnap.empty) {
-                alert('This order has already been processed!');
-                setCartItems([]);
-                setCartId('');
-                return;
-            }
+            await updateDoc(cartRef, {
+                cart: cartItems.map(({ id, quantity }) => ({
+                    id,
+                    quantity
+                }))
+            });
 
             // Create order document
             await addDoc(collection(db, 'customer-orders'), {
-                userId: cartData.userId,
-                cartId: cartId,
+                cartId,
+                items: cartItems,
                 orderDate: new Date(),
                 totalAmount: calculateTotal()
             });
@@ -211,6 +212,7 @@ const Cashier = () => {
                                 <th className="border p-2">Quantity</th>
                                 <th className="border p-2">Price</th>
                                 <th className="border p-2">Total</th>
+                                <th className="border p-2">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -218,15 +220,31 @@ const Cashier = () => {
                                 <tr key={item.id}>
                                     <td className="border p-2">{item.name}</td>
                                     <td className="border p-2">{item.category}</td>
-                                    <td className="border p-2">{item.quantity}</td>
+                                    <td className="border p-2">
+                                        <input 
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                                            className="w-20 p-1 border rounded"
+                                        />
+                                    </td>
                                     <td className="border p-2">${item.price}</td>
                                     <td className="border p-2">${item.totalPrice}</td>
+                                    <td className="border p-2">
+                                        <button 
+                                            onClick={() => handleRemoveItem(item.id)}
+                                            className="bg-red-500 text-white px-2 py-1 rounded"
+                                        >
+                                            Remove
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr className="bg-gray-100">
-                                <td colSpan={4} className="border p-2 font-bold">Total</td>
+                                <td colSpan={5} className="border p-2 font-bold">Total</td>
                                 <td className="border p-2 font-bold">${calculateTotal()}</td>
                             </tr>
                         </tfoot>
