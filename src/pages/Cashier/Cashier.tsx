@@ -113,6 +113,10 @@ const Cashier = () => {
     };
 
     const handleRemoveItem = (itemId) => {
+        if (cartItems.length <= 1) {
+            alert("Cannot remove all items from cart!");
+            return;
+        }
         setCartItems(prev => prev.filter(item => item.id !== itemId));
     };
 
